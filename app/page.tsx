@@ -1,103 +1,161 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+
+// Assignment type
+type Assignment = {
+  id: number;
+  name: string;
+};
+
+// Task type
+type Task = {
+  id: number;
+  assignmentId: number;
+  title: string;
+  deadline: string;
+  completed: boolean;
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // State for assignments and tasks
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Inputs
+  const [assignmentName, setAssignmentName] = useState("");
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDeadline, setTaskDeadline] = useState("");
+  const [selectedAssignment, setSelectedAssignment] = useState<number | null>(null);
+
+  // Add new assignment
+  const addAssignment = () => {
+    if (!assignmentName.trim()) return;
+    const newAssignment = { id: Date.now(), name: assignmentName };
+    setAssignments([...assignments, newAssignment]);
+    setAssignmentName(""); // reset input
+  };
+
+  // Add new task
+  const addTask = () => {
+    if (!taskTitle.trim() || !taskDeadline || !selectedAssignment) return;
+    const newTask = {
+      id: Date.now(),
+      assignmentId: selectedAssignment,
+      title: taskTitle,
+      deadline: taskDeadline,
+      completed: false,
+    };
+    setTasks([...tasks, newTask]);
+    setTaskTitle("");
+    setTaskDeadline("");
+    setSelectedAssignment(null);
+  };
+
+  // Toggle completed
+  const toggleComplete = (id: number) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  // Progress calculation
+  const completedTasks = tasks.filter((t) => t.completed).length;
+  const progressPercent = tasks.length ? (completedTasks / tasks.length) * 100 : 0;
+
+  return (
+    <div className="container">
+      <h1>Assignment Tracker</h1>
+
+      {/* Add Assignment */}
+      <div className="box">
+        <h2>Add Assignment</h2>
+        <input
+          type="text"
+          value={assignmentName}
+          onChange={(e) => setAssignmentName(e.target.value)}
+          placeholder="Assignment name"
+        />
+        <button onClick={addAssignment}>Add Assignment</button>
+
+        <ul>
+          {assignments.map((a) => (
+            <li key={a.id}>{a.name}</li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Add Task */}
+      <div className="box">
+        <h2>Add Task</h2>
+        <select
+          value={selectedAssignment ?? ""}
+          onChange={(e) => setSelectedAssignment(Number(e.target.value))}
+        >
+          <option value="">Select Assignment</option>
+          {assignments.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={taskTitle}
+          onChange={(e) => setTaskTitle(e.target.value)}
+          placeholder="Task title"
+        />
+        <input
+          type="date"
+          value={taskDeadline}
+          onChange={(e) => setTaskDeadline(e.target.value)}
+        />
+        <button onClick={addTask}>Add Task</button>
+      </div>
+
+      {/* Task List */}
+      <div className="box">
+        <h2>Tasks</h2>
+        {tasks.length === 0 ? (
+          <p>No tasks yet.</p>
+        ) : (
+          tasks.map((task) => {
+            const assignment = assignments.find((a) => a.id === task.assignmentId);
+            const daysLeft =
+              (new Date(task.deadline).getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24);
+
+            let colorClass = "green";
+            if (daysLeft < 3) colorClass = "red";
+            else if (daysLeft < 7) colorClass = "yellow";
+
+            return (
+              <div key={task.id} className={`task ${colorClass}`}>
+                <div>
+                  <strong>{assignment?.name} - {task.title}</strong>
+                  <div>Deadline: {task.deadline} ({Math.floor(daysLeft)} days left)</div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleComplete(task.id)}
+                />
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Progress */}
+      <div className="box">
+        <h2>Progress</h2>
+        <div className="progress-bar">
+          <div className="progress" style={{ width: `${progressPercent}%` }}>
+            {Math.round(progressPercent)}%
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
