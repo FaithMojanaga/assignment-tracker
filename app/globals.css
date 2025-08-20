@@ -44,14 +44,14 @@ input, select, button {
 }
 
 button {
-  background-color: #4CAF50;
+  background-color: pink;
   color: white;
   border: none;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: pink;
 }
 
 /* Task list */
@@ -78,7 +78,7 @@ button:hover {
 
 /* Progress bar */
 .progress-bar {
-  background-color: darkorchid;
+  background-color: #ccc;
   border-radius: 6px;
   height: 20px;
   width: 100%;
