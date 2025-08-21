@@ -31,6 +31,17 @@ export default function Home() {
     setAssignmentName("");
   };
 
+  // Delete assignment
+  const deleteAssignment = async (id: number) => {
+    await fetch("/api/assignments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setAssignments(assignments.filter(a => a.id !== id));
+    setTasks(tasks.filter(t => t.assignmentId !== id));
+  };
+
   // Add task
   const addTask = async () => {
     if (!selectedAssignment || !taskTitle.trim() || !taskDeadline) return;
@@ -77,7 +88,17 @@ export default function Home() {
       />
       <button onClick={addAssignment} style={{ marginLeft: "8px" }}>Add</button>
       <ul>
-        {assignments.map(a => <li key={a.id}>{a.name}</li>)}
+        {assignments.map(a => (
+          <li key={a.id}>
+            {a.name}
+            <button
+              onClick={() => deleteAssignment(a.id)}
+              style={{ marginLeft: "10px", color: "red" }}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
       </ul>
 
       <h2>Add Task</h2>

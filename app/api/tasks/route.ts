@@ -9,10 +9,12 @@ let tasks: {
   completedAt?: string;
 }[] = [];
 
+// Get all tasks
 export async function GET() {
   return NextResponse.json(tasks);
 }
 
+// Add a new task
 export async function POST(req: Request) {
   const body = await req.json();
   const newTask = {
@@ -27,6 +29,7 @@ export async function POST(req: Request) {
   return NextResponse.json(newTask);
 }
 
+// Toggle task completion
 export async function PATCH(req: Request) {
   const body = await req.json();
   const { id, completed } = body;
@@ -36,6 +39,16 @@ export async function PATCH(req: Request) {
       ? { ...task, completed, completedAt: completed ? new Date().toISOString() : undefined }
       : task
   );
+
+  return NextResponse.json({ success: true });
+}
+
+// Delete a task
+export async function DELETE(req: Request) {
+  const body = await req.json();
+  const { id } = body;
+
+  tasks = tasks.filter(task => task.id !== id);
 
   return NextResponse.json({ success: true });
 }
