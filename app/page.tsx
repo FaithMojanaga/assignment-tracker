@@ -1,98 +1,120 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Assignment = { id: number; name: string };
-type Task = { id: number; assignmentId: number; title: string; deadline: string; completed: boolean; completedAt?: string };
+type Module = { id: number; name: string };
+type Coursework = { 
+  id: number; 
+  assignmentId: number; 
+  title: string; 
+  deadline: string; 
+  completed: boolean; 
+  completedAt?: string 
+};
 
 export default function Home() {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [assignmentName, setAssignmentName] = useState("");
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDeadline, setTaskDeadline] = useState("");
-  const [selectedAssignment, setSelectedAssignment] = useState<number | null>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [coursework, setCoursework] = useState<Coursework[]>([]);
+  const [moduleName, setModuleName] = useState("");
+  const [cwTitle, setCwTitle] = useState("");
+  const [cwDeadline, setCwDeadline] = useState("");
+  const [selectedModule, setSelectedModule] = useState<number | null>(null);
 
-  // Load data
+  // Load modules and coursework
   useEffect(() => {
-    fetch("/api/assignments").then(r => r.json()).then(setAssignments);
-    fetch("/api/tasks").then(r => r.json()).then(setTasks);
+    fetch("/api/modules").then(r => r.json()).then(setModules);
+    fetch("/api/coursework").then(r => r.json()).then(setCoursework);
   }, []);
 
-  // Add assignment
-  const addAssignment = async () => {
-    if (!assignmentName.trim()) return;
-    const res = await fetch("/api/assignments", {
+  // Add module
+  const addModule = async () => {
+    if (!moduleName.trim()) return;
+    const res = await fetch("/api/modules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: assignmentName }),
+      body: JSON.stringify({ name: moduleName }),
     });
-    const newA = await res.json();
-    setAssignments([...assignments, newA]);
-    setAssignmentName("");
+    const newModule = await res.json();
+    setModules([...modules, newModule]);
+    setModuleName("");
   };
 
-  // Delete assignment
-  const deleteAssignment = async (id: number) => {
-    await fetch("/api/assignments", {
+  // Delete module and its coursework
+  const deleteModule = async (id: number) => {
+    await fetch("/api/modules", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    setAssignments(assignments.filter(a => a.id !== id));
-    setTasks(tasks.filter(t => t.assignmentId !== id));
+    setModules(modules.filter(m => m.id !== id));
+    setCoursework(coursework.filter(cw => cw.assignmentId !== id));
   };
 
-  // Add task
-  const addTask = async () => {
-    if (!selectedAssignment || !taskTitle.trim() || !taskDeadline) return;
-    const res = await fetch("/api/tasks", {
+  // Add coursework
+  const addCoursework = async () => {
+    if (!selectedModule || !cwTitle.trim() || !cwDeadline) return;
+    const res = await fetch("/api/coursework", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assignmentId: selectedAssignment, title: taskTitle, deadline: taskDeadline }),
+      body: JSON.stringify({
+        assignmentId: selectedModule,
+        title: cwTitle,
+        deadline: cwDeadline,
+      }),
     });
-    const newT = await res.json();
-    setTasks([...tasks, newT]);
-    setTaskTitle("");
-    setTaskDeadline("");
-    setSelectedAssignment(null);
+    const newCW = await res.json();
+    setCoursework([...coursework, newCW]);
+    setCwTitle("");
+    setCwDeadline("");
+    setSelectedModule(null);
   };
 
   // Toggle completion
-  const toggleTask = async (id: number, completed: boolean) => {
-    await fetch("/api/tasks", {
+  const toggleCoursework = async (id: number, completed: boolean) => {
+    await fetch("/api/coursework", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, completed }),
     });
-    setTasks(tasks.map(t =>
-      t.id === id
-        ? { ...t, completed, completedAt: completed ? new Date().toISOString() : undefined }
-        : t
+    setCoursework(coursework.map(cw =>
+      cw.id === id
+        ? { ...cw, completed, completedAt: completed ? new Date().toISOString() : undefined }
+        : cw
     ));
   };
 
+  // Delete coursework
+  const deleteCoursework = async (id: number) => {
+    await fetch("/api/coursework", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setCoursework(coursework.filter(cw => cw.id !== id));
+  };
+
   // Progress
-  const total = tasks.length;
-  const done = tasks.filter(t => t.completed).length;
+  const total = coursework.length;
+  const done = coursework.filter(cw => cw.completed).length;
   const progress = total ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h1>Assignment Tracker</h1>
+    <div style={{ padding: "20px", maxWidth: "700px", margin: "auto" }}>
+      <h1>Coursework Tracker</h1>
 
-      <h2>Add Assignment</h2>
+      {/* Add Module */}
+      <h2>Add Module</h2>
       <input
-        value={assignmentName}
-        onChange={(e) => setAssignmentName(e.target.value)}
-        placeholder="Assignment name"
+        value={moduleName}
+        onChange={(e) => setModuleName(e.target.value)}
+        placeholder="e.g. Algorithms"
       />
-      <button onClick={addAssignment} style={{ marginLeft: "8px" }}>Add</button>
+      <button onClick={addModule} style={{ marginLeft: "8px" }}>Add</button>
       <ul>
-        {assignments.map(a => (
-          <li key={a.id}>
-            {a.name}
+        {modules.map(m => (
+          <li key={m.id}>
+            {m.name}
             <button
-              onClick={() => deleteAssignment(a.id)}
+              onClick={() => deleteModule(m.id)}
               style={{ marginLeft: "10px", color: "red" }}
             >
               Delete
@@ -101,49 +123,66 @@ export default function Home() {
         ))}
       </ul>
 
-      <h2>Add Task</h2>
+      {/* Add Coursework */}
+      <h2>Add Coursework</h2>
       <select
-        value={selectedAssignment ?? ""}
-        onChange={(e) => setSelectedAssignment(Number(e.target.value))}
+        value={selectedModule ?? ""}
+        onChange={(e) => setSelectedModule(Number(e.target.value))}
       >
-        <option value="">Select Assignment</option>
-        {assignments.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+        <option value="">Select Module</option>
+        {modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
       </select>
       <input
-        value={taskTitle}
-        onChange={(e) => setTaskTitle(e.target.value)}
-        placeholder="Task title"
+        value={cwTitle}
+        onChange={(e) => setCwTitle(e.target.value)}
+        placeholder="e.g. Lab Report"
       />
       <input
         type="date"
-        value={taskDeadline}
-        onChange={(e) => setTaskDeadline(e.target.value)}
+        value={cwDeadline}
+        onChange={(e) => setCwDeadline(e.target.value)}
       />
-      <button onClick={addTask}>Add</button>
+      <button onClick={addCoursework}>Add</button>
 
+      {/* Progress */}
       <h2>Progress</h2>
-      <div>{done}/{total} tasks done ({progress}%)</div>
+      <div>{done}/{total} coursework completed ({progress}%)</div>
       <progress value={done} max={total}></progress>
 
-      <h2>Tasks</h2>
-      {tasks.map(t => {
-        const a = assignments.find(x => x.id === t.assignmentId);
-        return (
-          <div key={t.id} style={{ margin: "8px 0" }}>
-            <input
-              type="checkbox"
-              checked={t.completed}
-              onChange={(e) => toggleTask(t.id, e.target.checked)}
-            />
-            {a?.name} - {t.title} (due {t.deadline})
-            {t.completed && (
-              <span style={{ color: "green", marginLeft: "10px" }}>
-                Done at {new Date(t.completedAt!).toLocaleString()}
-              </span>
-            )}
-          </div>
-        );
-      })}
+      {/* Coursework grouped by module */}
+      <h2>Coursework</h2>
+      {modules.map(mod => (
+        <div key={mod.id} style={{ marginTop: "15px" }}>
+          <h3>{mod.name}</h3>
+          {coursework.filter(cw => cw.assignmentId === mod.id).length === 0 ? (
+            <p>No coursework yet</p>
+          ) : (
+            coursework
+              .filter(cw => cw.assignmentId === mod.id)
+              .map(cw => (
+                <div key={cw.id} style={{ margin: "6px 0" }}>
+                  <input
+                    type="checkbox"
+                    checked={cw.completed}
+                    onChange={(e) => toggleCoursework(cw.id, e.target.checked)}
+                  />
+                  {cw.title} (due {cw.deadline})
+                  {cw.completed && (
+                    <span style={{ color: "green", marginLeft: "10px" }}>
+                      Completed at {new Date(cw.completedAt!).toLocaleString()}
+                    </span>
+                  )}
+                  <button 
+                    onClick={() => deleteCoursework(cw.id)} 
+                    style={{ marginLeft: "10px", color: "red" }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))
+          )}
+        </div>
+      ))}
     </div>
   );
 }

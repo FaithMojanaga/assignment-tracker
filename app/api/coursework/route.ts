@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-let tasks: {
+let coursework: {
   id: number;
   assignmentId: number;
   title: string;
@@ -9,15 +9,15 @@ let tasks: {
   completedAt?: string;
 }[] = [];
 
-// Get all tasks
+// Get all coursework
 export async function GET() {
-  return NextResponse.json(tasks);
+  return NextResponse.json(coursework);
 }
 
-// Add a new task
+// Add coursework
 export async function POST(req: Request) {
   const body = await req.json();
-  const newTask = {
+  const newCW = {
     id: Date.now(),
     assignmentId: body.assignmentId,
     title: body.title,
@@ -25,30 +25,28 @@ export async function POST(req: Request) {
     completed: false,
     completedAt: undefined,
   };
-  tasks.push(newTask);
-  return NextResponse.json(newTask);
+  coursework.push(newCW);
+  return NextResponse.json(newCW);
 }
 
-// Toggle task completion
+// Toggle coursework completion
 export async function PATCH(req: Request) {
   const body = await req.json();
   const { id, completed } = body;
 
-  tasks = tasks.map(task =>
-    task.id === id
-      ? { ...task, completed, completedAt: completed ? new Date().toISOString() : undefined }
-      : task
+  coursework = coursework.map(cw =>
+    cw.id === id
+      ? { ...cw, completed, completedAt: completed ? new Date().toISOString() : undefined }
+      : cw
   );
 
   return NextResponse.json({ success: true });
 }
 
-// Delete a task
+// Delete coursework
 export async function DELETE(req: Request) {
   const body = await req.json();
   const { id } = body;
-
-  tasks = tasks.filter(task => task.id !== id);
-
+  coursework = coursework.filter(cw => cw.id !== id);
   return NextResponse.json({ success: true });
 }
