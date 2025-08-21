@@ -1,37 +1,26 @@
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-let tasks: { 
-  id: number; 
-  assignmentId: number; 
-  title: string; 
-  deadline: string; 
-  completed: boolean; 
-  completedAt?: string; 
-}[] = [];
+const prisma = new PrismaClient();
 
-// tasks
 export async function GET() {
+  const tasks = await prisma.task.findMany();
   return NextResponse.json(tasks);
 }
 
-// new task
 export async function POST(req: Request) {
-  const body = await req.json();
-  const newTask = { id: Date.now(), ...body, completed: false, completedAt: undefined };
-  tasks.push(newTask);
-  return NextResponse.json(newTask);
+  const { assignmentId, title, deadline } = await req.json();
+  const task = await prisma.task.create({
+    data: { assignmentId, title, deadline },
+  });
+  return NextResponse.json(task);
 }
 
-// update task
 export async function PATCH(req: Request) {
-  const body = await req.json();
-  const { id, completed } = body;
-
-  tasks = tasks.map(task =>
-    task.id === id
-      ? { ...task, completed, completedAt: completed ? new Date().toISOString() : undefined }
-      : task
-  );
-
-  return NextResponse.json({ success: true });
+  const { id, completed } = await req.json();
+  const task = await prisma.task.update({
+    where: { id },
+    data: { completed, completedAt: completed ? new Date() : null },
+  });
+  return NextResponse.json(task);
 }

@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-let assignments: { id: number; name: string }[] = [];
+const prisma = new PrismaClient();
 
-// assignments
 export async function GET() {
+  const assignments = await prisma.assignment.findMany();
   return NextResponse.json(assignments);
 }
 
-//  new assignment
 export async function POST(req: Request) {
-  const body = await req.json();
-  const newAssignment = { id: Date.now(), name: body.name };
-  assignments.push(newAssignment);
-  return NextResponse.json(newAssignment);
+  const { name } = await req.json();
+  const assignment = await prisma.assignment.create({ data: { name } });
+  return NextResponse.json(assignment);
 }
